@@ -1,97 +1,141 @@
-/**
- * Exemplo de testes para StringUtils usando Jest.
- * Rode com: npx jest StringUtils.test.js
- */
-const StringUtils = require('./StringUtils');
+class GerenciadorFinanceiro {
+  constructor(saldoInicial = 0) {
+    this.saldo = saldoInicial;
+    this.transacoes = [];
+    this.orcamentos = {}; // { categoria: limite }
+  }
 
-describe('StringUtils', () => {
-  const utils = new StringUtils();
+  // 1. Adicionar saldo
+  depositar(valor) {
+    if (valor <= 0) return false;
+    this.saldo += valor;
+    return true;
+  }
 
-  test('capitalize', () => {
-    expect(utils.capitalize('javascript')).toBe('Javascript');
-    expect(utils.capitalize('')).toBe('');
-  });
+  // 2. Retirar saldo
+  sacar(valor) {
+    if (valor <= 0 || valor > this.saldo) return false;
+    this.saldo -= valor;
+    return true;
+  }
 
-  test('reverse', () => {
-    expect(utils.reverse('abc')).toBe('cba');
-  });
+  // 3. Registrar nova transação
+  adicionarTransacao(id, tipo, valor, categoria) {
+    if (!id || valor <= 0 || !['receita', 'despesa'].includes(tipo)) return false;
+    this.transacoes.push({ id, tipo, valor, categoria });
+    return true;
+  }
 
-  test('isPalindrome', () => {
-    expect(utils.isPalindrome('Arara')).toBe(true);
-    expect(utils.isPalindrome('teste')).toBe(false);
-  });
+  // 4. Remover uma transação existente
+  removerTransacao(id) {
+    const index = this.transacoes.findIndex(t => t.id === id);
+    if (index === -1) return false;
+    this.transacoes.splice(index, 1);
+    return true;
+  }
 
-  test('countVowels', () => {
-    expect(utils.countVowels('educação')).toBeGreaterThan(0);
-    expect(utils.countVowels('xyz')).toBe(0);
-  });
+  // 5. Definir teto de gastos para uma categoria
+  definirOrcamento(categoria, limite) {
+    if (limite < 0) return false;
+    this.orcamentos[categoria] = limite;
+    return true;
+  }
 
-  test('countWords', () => {
-    expect(utils.countWords('  olá   mundo ')).toBe(2);
-    expect(utils.countWords('')).toBe(0);
-  });
+  // 6. Somar todas as despesas de uma categoria específica
+  calcularTotalPorCategoria(categoria) {
+    return this.transacoes
+      .filter(t => t.tipo === 'despesa' && t.categoria === categoria)
+      .reduce((soma, t) => soma + t.valor, 0);
+  }
 
-  test('truncate', () => {
-    expect(utils.truncate('abcdefgh', 5)).toBe('abcde...');
-    expect(utils.truncate('abc', 5)).toBe('abc');
-  });
+  // 7. Verificar se os gastos passaram do limite definido
+  estourouOrcamento(categoria) {
+    const limite = this.orcamentos[categoria];
+    if (!limite) return false;
+    return this.calcularTotalPorCategoria(categoria) > limite;
+  }
 
-  test('toCamelCase', () => {
-    expect(utils.toCamelCase('meu-nome-completo')).toBe('meuNomeCompleto');
-  });
+  // 8. Somar todas as receitas registradas
+  calcularTotalReceitas() {
+    return this.transacoes
+      .filter(t => t.tipo === 'receita')
+      .reduce((soma, t) => soma + t.valor, 0);
+  }
 
-  test('toSnakeCase', () => {
-    expect(utils.toSnakeCase('meuNomeCompleto')).toBe('meu_nome_completo');
-  });
+  // 9. Somar todas as despesas registradas
+  calcularTotalDespesas() {
+    return this.transacoes
+      .filter(t => t.tipo === 'despesa')
+      .reduce((soma, t) => soma + t.valor, 0);
+  }
 
-  test('toKebabCase', () => {
-    expect(utils.toKebabCase('meuNomeCompleto')).toBe('meu-nome-completo');
-  });
+  // 10. Obter saldo final cruzando receitas e despesas
+  calcularSaldoLiquido() {
+    return this.calcularTotalReceitas() - this.calcularTotalDespesas();
+  }
 
-  test('removeWhitespace', () => {
-    expect(utils.removeWhitespace('a b  c')).toBe('abc');
-  });
+  // 11. Calcular a porcentagem que sobrou da receita
+  calcularTaxaDePoupanca() {
+    const receitas = this.calcularTotalReceitas();
+    if (receitas === 0) return 0;
+    const salvo = this.calcularSaldoLiquido();
+    return salvo > 0 ? (salvo / receitas) * 100 : 0;
+  }
 
-  test('isEmpty', () => {
-    expect(utils.isEmpty('   ')).toBe(true);
-    expect(utils.isEmpty('a')).toBe(false);
-  });
+  // 12. Simular rendimento de juros compostos sobre o saldo atual
+  simularRendimento(taxaAnual, anos) {
+    if (taxaAnual < 0 || anos < 0) return 0;
+    const principal = this.saldo;
+    const taxaDecimal = taxaAnual / 100;
+    return principal * Math.pow(1 + taxaDecimal, anos);
+  }
 
-  test('countOccurrences', () => {
-    expect(utils.countOccurrences('banana', 'an')).toBe(2);
-  });
+  // 13. Filtrar transações acima de um valor específico
+  filtrarTransacoesMaioresQue(valor) {
+    return this.transacoes.filter(t => t.valor > valor);
+  }
 
-  test('slugify', () => {
-    expect(utils.slugify('Olá Mundo!')).toBe('olá-mundo');
-  });
+  // 14. Buscar uma transação por ID
+  buscarTransacaoPorId(id) {
+    return this.transacoes.find(t => t.id === id) || null;
+  }
 
-  test('padLeft', () => {
-    expect(utils.padLeft('5', 3, '0')).toBe('005');
-  });
+  // 15. Validar se uma transação possui todos os campos corretos
+  validarTransacao(transacao) {
+    if (!transacao) return false;
+    const { id, tipo, valor, categoria } = transacao;
+    return !!(id && (tipo === 'receita' || tipo === 'despesa') && valor > 0 && categoria);
+  }
 
-  test('padRight', () => {
-    expect(utils.padRight('5', 3, '0')).toBe('500');
-  });
+  // 16. Limpar todo o histórico e zerar o saldo
+  resetarConta() {
+    this.saldo = 0;
+    this.transacoes = [];
+    this.orcamentos = {};
+    return true;
+  }
 
-  test('repeat', () => {
-    expect(utils.repeat('ab', 3)).toBe('ababab');
-    expect(() => utils.repeat('ab', -1)).toThrow();
-  });
+  // 17. Verificar se a conta tem saldo suficiente para uma compra futura
+  podeComprar(valorCompra) {
+    return valorCompra > 0 && this.saldo >= valorCompra;
+  }
 
-  test('removeDuplicateChars', () => {
-    expect(utils.removeDuplicateChars('mississippi')).toBe('misp');
-  });
+  // 18. Converter o saldo atual para outra moeda fictícia baseado em uma taxa
+  converterSaldo(taxaConversao) {
+    if (taxaConversao <= 0) return 0;
+    return this.saldo * taxaConversao;
+  }
 
-  test('isNumeric', () => {
-    expect(utils.isNumeric('123')).toBe(true);
-    expect(utils.isNumeric('abc')).toBe(false);
-  });
+  // 19. Descobrir qual categoria teve a maior despesa única
+  obterCategoriaMaisCara() {
+    const despesas = this.transacoes.filter(t => t.tipo === 'despesa');
+    if (despesas.length === 0) return null;
+    const maiorDespesa = despesas.reduce((maior, atual) => atual.valor > maior.valor ? atual : maior);
+    return maiorDespesa.categoria;
+  }
 
-  test('toTitleCase', () => {
-    expect(utils.toTitleCase('claude sonnet 5')).toBe('Claude Sonnet 5');
-  });
-
-  test('wordFrequency', () => {
-    expect(utils.wordFrequency('a b a c b a')).toEqual({ a: 3, b: 2, c: 1 });
-  });
-});
+  // 20. Contar quantas transações existem no histórico
+  obterTotalDeTransacoes() {
+    return this.transacoes.length;
+  }
+}
