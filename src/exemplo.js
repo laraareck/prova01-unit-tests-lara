@@ -5,12 +5,14 @@ class GerenciadorFinanceiro {
     this.orcamentos = {}; // { categoria: limite }
   }
 
-  // 1. Adicionar saldo
+  // 1. depositar
   depositar(valor) {
     if (valor <= 0) return false;
     this.saldo += valor;
     return true;
   }
+
+  
 
   // 2. Retirar saldo
   sacar(valor) {
@@ -139,3 +141,5 @@ class GerenciadorFinanceiro {
     return this.transacoes.length;
   }
 }
+
+module.exports = GerenciadorFinanceiro;
